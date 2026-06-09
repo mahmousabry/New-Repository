@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1b35">
+<title>نظام متابعة الأسلاك</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-icon">🗑️</div>
+    <h3 id="modal-title">تأكيد الحذف</h3>
+    <p id="modal-msg">هل أنت متأكد؟</p>
+    <div class="modal-btns">
+      <button class="btn btn-danger-solid btn-sm" id="modal-ok">نعم، احذف</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <!-- ROW 1: شعار + عنوان + حالة الاتصال -->
+  <div class="topbar-row1">
+    <div class="logo">⚡</div>
+    <div class="topbar-info">
+      <h1>نظام متابعة الأسلاك</h1>
+      <small>قسم الكهرباء</small>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot offline" id="status-dot"></div>
+      <span class="status-text" id="status-text">جاري الاتصال</span>
+    </div>
+  </div>
+  <!-- ROW 2: الـ navbar -->
+  <nav class="top-nav">
+    <button class="tnav-btn on" onclick="nav('entry',this)">
+      <span class="t-icon">📝</span> إدخال
+    </button>
+    <button class="tnav-btn" onclick="nav('records',this)">
+      <span class="t-icon">📋</span> السجلات
+    </button>
+    <button class="tnav-btn" onclick="nav('reports',this)">
+      <span class="t-icon">📊</span> التقارير
+    </button>
+  </nav>
+</div>
+
+<!-- SYNC BAR -->
+<div class="sync-bar" id="sync-bar"></div>
+
+<div class="main">
+
+  <!-- ===== إدخال ===== -->
+  <div class="page on" id="pg-entry">
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n" id="s-ent">—</div><div class="stat-l">إجمالي السجلات</div></div>
+      <div class="stat"><div class="stat-n" id="s-met">—</div><div class="stat-l">إجمالي الأمتار</div></div>
+      <div class="stat"><div class="stat-n">7</div><div class="stat-l">مشرفين</div></div>
+      <div class="stat"><div class="stat-n">8</div><div class="stat-l">Clusters</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>⚙️ إدخال استهلاك جديد</h3></div>
+      <div class="card-body">
+        <div class="form-grid g3">
+          <div class="fg"><label>التاريخ</label><input type="date" id="i-date" lang="en"></div>
+          <div class="fg"><label>المشرف</label>
+            <select id="i-sup"><option value="">— اختر المشرف —</option>
+              <option>يوسف ماهر</option><option>أيمن منير</option><option>يحيى شعبان</option>
+              <option>مجدي لطفي</option><option>سامي وارث</option><option>محمد السعودي</option><option>عزت نبيه</option>
+            </select>
+          </div>
+          <div class="fg"><label>الـ Cluster</label>
+            <select id="i-cl"><option value="">— اختر —</option>
+              <option>Cluster 5</option><option>Cluster 6</option><option>Cluster 9</option><option>Cluster 10</option>
+              <option>Cluster 15</option><option>Cluster 16</option><option>Cluster 17</option><option>Cluster 18</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg"><label>ملاحظات (اختياري)</label>
+          <input type="text" id="i-notes" placeholder="مثال: تمديد سقف الدور الثالث...">
+        </div>
+        <div class="section-divider">
+          <span>🔌 الأسلاك المستخدمة</span>
+          <button class="btn btn-ghost btn-sm" onclick="addRow()">➕ إضافة سلك</button>
+        </div>
+        <div id="rows-wrap"></div>
+        <div class="btn-row">
+          <button class="btn btn-ac" onclick="save()" id="save-btn">✅ حفظ السجل</button>
+          <button class="btn btn-ghost" onclick="resetForm()">🔄 مسح</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== السجلات ===== -->
+  <div class="page" id="pg-records">
+
+    <div class="card">
+      <div class="card-head"><h3>📊 كل مشرف في كل Cluster — إجمالي الأمتار</h3></div>
+      <div class="cross-wrap" id="cross-wrap">
+        <div class="loading"><div class="spinner"></div>جاري التحميل...</div>
+      </div>
+    </div>
+
+    <div class="backup-section">
+      <div class="backup-title">💾 النسخة الاحتياطية</div>
+      <div class="backup-desc">حمّل نسخة من جميع بياناتك — CSV يفتح في Excel، JSON للنسخ الكاملة.</div>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn btn-excel btn-sm" onclick="backupCSV()">📥 تحميل Excel (CSV)</button>
+        <button class="btn btn-json  btn-sm" onclick="backupJSON()">📥 تحميل JSON</button>
+      </div>
+    </div>
+
+    <div class="fbar">
+      <div class="fg"><label>المشرف</label>
+        <select id="f-sup"><option value="">الكل</option>
+          <option>يوسف ماهر</option><option>أيمن منير</option><option>يحيى شعبان</option>
+          <option>مجدي لطفي</option><option>سامي وارث</option><option>محمد السعودي</option><option>عزت نبيه</option>
+        </select>
+      </div>
+      <div class="fg"><label>الـ Cluster</label>
+        <select id="f-cl"><option value="">الكل</option>
+          <option>Cluster 5</option><option>Cluster 6</option><option>Cluster 9</option><option>Cluster 10</option>
+          <option>Cluster 15</option><option>Cluster 16</option><option>Cluster 17</option><option>Cluster 18</option>
+        </select>
+      </div>
+      <div class="fg"><label>من تاريخ</label><input type="date" id="f-fr" lang="en"></div>
+      <div class="fg"><label>إلى تاريخ</label><input type="date" id="f-to" lang="en"></div>
+      <button class="btn btn-pr   btn-sm" onclick="loadRecords()">🔍 بحث</button>
+      <button class="btn btn-ghost btn-sm" onclick="resetF()">↩️</button>
+    </div>
+
+    <div class="card" style="padding:0">
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#fafaf8">
+        <span style="font-size:12px;color:var(--muted);font-weight:600" id="tbl-count">جاري التحميل...</span>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteAll()">🗑️ مسح كل السجلات</button>
+      </div>
+      <div class="tbl-wrap" id="tbl-wrap">
+        <div class="loading"><div class="spinner"></div>جاري التحميل...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== التقارير ===== -->
+  <div class="page" id="pg-reports">
+    <div class="fbar">
+      <div class="fg"><label>المشرف</label>
+        <select id="r-sup"><option value="">الجميع</option>
+          <option>يوسف ماهر</option><option>أيمن منير</option><option>يحيى شعبان</option>
+          <option>مجدي لطفي</option><option>سامي وارث</option><option>محمد السعودي</option><option>عزت نبيه</option>
+        </select>
+      </div>
+      <div class="fg"><label>الـ Cluster</label>
+        <select id="r-cl"><option value="">الجميع</option>
+          <option>Cluster 5</option><option>Cluster 6</option><option>Cluster 9</option><option>Cluster 10</option>
+          <option>Cluster 15</option><option>Cluster 16</option><option>Cluster 17</option><option>Cluster 18</option>
+        </select>
+      </div>
+      <div class="fg"><label>الشهر</label>
+        <input type="month" id="r-month" lang="en" style="direction:ltr;text-align:left">
+      </div>
+      <div class="fg"><label>من تاريخ</label><input type="date" id="r-fr" lang="en"></div>
+      <div class="fg"><label>إلى تاريخ</label><input type="date" id="r-to" lang="en"></div>
+      <button class="btn btn-ac btn-sm" onclick="genReport()">📊 توليد التقرير</button>
+    </div>
+
+    <div class="rep-wrap" id="rep-wrap">
+      <div class="rep-hd">
+        <div><h2 id="rep-ttl">تقرير استهلاك الأسلاك</h2><p id="rep-sub">قسم الكهرباء</p></div>
+        <div class="rep-meta" id="rep-meta"></div>
+      </div>
+      <div class="rep-body" id="rep-body"></div>
+      <div class="btn-row" style="padding:14px 0 0">
+        <button class="btn btn-green" onclick="window.print()">🖨️ طباعة التقرير</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
